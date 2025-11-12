@@ -1,0 +1,43 @@
+# Configuration for ELEC537 Assignment 3 - Object Detection on Raspberry Pi
+
+# Camera Settings
+camera:
+  resolution: [640, 480]  # Width x Height
+  fps: 30
+  rotation: 0
+
+# Model Settings
+model:
+  name: "yolo11n"  # yolo11n (nano) is the smallest/fastest variant
+  confidence_threshold: 0.5
+  iou_threshold: 0.45
+  device: "cpu"  # Use "cpu" for Raspberry Pi
+
+# Paths
+paths:
+  models_dir: "./models"
+  data_dir: "./data"
+  results_dir: "./results"
+  validation_images: "./data/validation"
+  captured_frames: "./results/captured_frames"
+  videos: "./results/videos"
+
+# Task 1 Settings
+task1:
+  display_preview: true
+  save_frames: true
+  max_frames_to_save: 10
+
+# Task 2 - Quantization Settings
+task2:
+  quantization:
+    formats:
+      - "fp32"      # Baseline floating point
+      - "fp16"      # Half precision
+      - "int8"      # Integer quantization
+  validation_set_size: 50  # Number of images for accuracy evaluation
+  
+# Performance Monitoring
+monitoring:
+  warmup_frames: 10  # Skip first N frames for performance measurement
+  measurement_frames: 100  # Number of frames to average metrics over
