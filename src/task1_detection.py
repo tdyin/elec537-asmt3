@@ -45,6 +45,7 @@ class ObjectDetector:
         
         # Performance metrics
         self.inference_times = []
+        self.cpu_usages = []
         self.frame_count = 0
         self.saved_frames = 0
         
@@ -85,13 +86,20 @@ class ObjectDetector:
         """Run object detection on a single frame."""
         start_time = time.time()
         
-        # Run inference
+        # Get image size from config (default 320 for faster inference)
+        imgsz = self.model_config.get('imgsz', 320)
+        
+        # Run inference with optimizations
         results = self.model(
             frame,
             conf=self.model_config['confidence_threshold'],
             iou=self.model_config['iou_threshold'],
             device=self.model_config['device'],
-            verbose=False
+            imgsz=imgsz,  # Use smaller image size for speed
+            verbose=False,
+            half=False,  # Disable FP16 on CPU (not supported)
+            augment=False,  # Disable test-time augmentation
+            max_det=100  # Limit max detections for speed
         )
         
         inference_time = (time.time() - start_time) * 1000  # Convert to ms
@@ -144,6 +152,10 @@ class ObjectDetector:
         print("Press 'q' to quit")
         print("="*60 + "\n")
         
+        # Frame skipping for better performance
+        frame_skip = 0  # Process every frame initially
+        skip_counter = 0
+        
         try:
             while True:
                 ret, frame = self.cap.read()
@@ -152,16 +164,27 @@ class ObjectDetector:
                     break
                 
                 self.frame_count += 1
+                skip_counter += 1
+                
+                # Skip frames if needed (process every Nth frame)
+                if skip_counter <= frame_skip:
+                    continue
+                skip_counter = 0
                 
                 # Process frame
                 annotated_frame, inference_time, results = self.process_frame(frame)
                 
+                # Get CPU usage (less frequently to save cycles)
+                if self.frame_count % 5 == 0:
+                    cpu_usage = self.get_cpu_usage()
+                else:
+                    cpu_usage = 0
+                
                 # Record metrics after warmup
                 if self.frame_count > self.monitoring['warmup_frames']:
                     self.inference_times.append(inference_time)
-                
-                # Get CPU usage
-                cpu_usage = self.get_cpu_usage()
+                    if cpu_usage > 0:  # Only record when actually measured
+                        self.cpu_usages.append(cpu_usage)
                 
                 # Display metrics
                 display_frame = self.display_metrics(annotated_frame, inference_time, cpu_usage)
@@ -205,6 +228,15 @@ class ObjectDetector:
             print(f"Min Inference Time: {min_inference:.2f} ms")
             print(f"Max Inference Time: {max_inference:.2f} ms")
             print(f"Average FPS: {1000/avg_inference:.2f}")
+        
+        if self.cpu_usages:
+            avg_cpu = np.mean(self.cpu_usages)
+            min_cpu = np.min(self.cpu_usages)
+            max_cpu = np.max(self.cpu_usages)
+            
+            print(f"Average CPU Utilization: {avg_cpu:.1f}%")
+            print(f"Min CPU Utilization: {min_cpu:.1f}%")
+            print(f"Max CPU Utilization: {max_cpu:.1f}%")
         
         model_size = self.get_model_size()
         print(f"Model Size: {model_size:.2f} MB")

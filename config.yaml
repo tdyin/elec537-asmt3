@@ -2,16 +2,17 @@
 
 # Camera Settings
 camera:
-  resolution: [640, 480]  # Width x Height
-  fps: 30
+  resolution: [320, 240]  # Width x Height - Reduced for performance
+  fps: 10  # Lower FPS for more stable performance
   rotation: 0
 
 # Model Settings
 model:
   name: "yolo11n"  # yolo11n (nano) is the smallest/fastest variant
-  confidence_threshold: 0.5
+  confidence_threshold: 0.4  # Slightly lower threshold
   iou_threshold: 0.45
   device: "cpu"  # Use "cpu" for Raspberry Pi
+  imgsz: 320  # Smaller image size for faster inference (default 640)
 
 # Paths
 paths:
@@ -24,7 +25,7 @@ paths:
 
 # Task 1 Settings
 task1:
-  display_preview: true
+  display_preview: false  # Disable for better performance
   save_frames: true
   max_frames_to_save: 10
 
