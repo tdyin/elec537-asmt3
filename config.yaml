@@ -1,0 +1,37 @@
+
+# Camera Settings
+camera:
+  resolution: [320, 240]
+  fps: 10
+
+# Model Settings
+model:
+  name: "yolo11n"  
+  confidence_threshold: 0.4  
+  iou_threshold: 0.45
+  device: "cpu" 
+  imgsz: 320 
+
+# Paths
+paths:
+  models_dir: "./models"
+  data_dir: "./data"
+  results_dir: "./results"
+  validation_images: "./data/validation"
+
+# Task 1 Settings
+task1:
+  display_preview: true
+
+# Task 2 - Quantization Settings
+task2:
+  quantization:
+    formats:
+      - "fp32"      # Baseline floating point
+      - "fp16"      # Half precision
+      - "int8"      # Integer quantization
+  validation_set_size: 50  # Number of images for accuracy evaluation
+  
+# Performance Monitoring
+monitoring:
+  warmup_frames: 10  # Skip first N frames for performance measurement
