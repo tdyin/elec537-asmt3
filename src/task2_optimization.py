@@ -59,31 +59,41 @@ class ModelOptimizer:
             
             try:
                 if format_type == "fp32":
-                    # Baseline - just copy the original PyTorch model
                     exported_models[format_type] = self.base_model_path
                     print(f"Using original model: {self.base_model_path}")
                 
+                # FP16 Quantization
                 elif format_type == "fp16":
-                    # Export to TorchScript with FP16
                     export_path = f"{self.paths['models_dir']}/{self.model_config['name']}_fp16.torchscript"
+                    
+                    # Half precision export
                     model.export(format='torchscript', half=True)
-                    # Rename to expected location
+                    
                     default_export = self.base_model_path.replace('.pt', '.torchscript')
                     if os.path.exists(default_export):
                         os.rename(default_export, export_path)
                     exported_models[format_type] = export_path
                     print(f"Exported FP16 model: {export_path}")
                 
+                # INT8 Quantization
                 elif format_type == "int8":
-                    # Export to ONNX with INT8 quantization
-                    export_path = f"{self.paths['models_dir']}/{self.model_config['name']}_int8.onnx"
-                    model.export(format='onnx', int8=True, simplify=True)
-                    # Rename to expected location
-                    default_export = self.base_model_path.replace('.pt', '.onnx')
-                    if os.path.exists(default_export):
-                        os.rename(default_export, export_path)
-                    exported_models[format_type] = export_path
-                    print(f"Exported INT8 model: {export_path}")
+                    export_path = f"{self.paths['models_dir']}/{self.model_config['name']}_int8.torchscript"
+                    
+                    model.export(format='torchscript')
+                    ts_path = self.base_model_path.replace('.pt', '.torchscript')
+                    
+                    # Load and quantize the TorchScript model
+                    if os.path.exists(ts_path):
+                        quantized_model = torch.jit.load(ts_path)
+                        quantized_model = torch.quantization.quantize_dynamic(
+                            quantized_model, {torch.nn.Linear}, dtype=torch.qint8
+                        )
+                        torch.jit.save(quantized_model, export_path)
+                        os.remove(ts_path)  # Clean up intermediate file
+                        exported_models[format_type] = export_path
+                        print(f"Exported INT8 quantized model: {export_path}")
+                    else:
+                        print(f"Warning: TorchScript export not found at {ts_path}")
                 
             except Exception as e:
                 print(f"Error exporting {format_type}: {e}")
@@ -257,9 +267,9 @@ class ModelOptimizer:
                 if format_type in self.results:
                     r = self.results[format_type]
                     size_reduction = ((baseline['model_size_mb'] - r['model_size_mb']) / 
-                                     baseline['model_size_mb'] * 100)
+                                     baseline['model_size_mb'] * 100) if baseline['model_size_mb'] > 0 else 0.0
                     speed_improvement = ((baseline['avg_inference_time_ms'] - r['avg_inference_time_ms']) / 
-                                        baseline['avg_inference_time_ms'] * 100)
+                                        baseline['avg_inference_time_ms'] * 100) if baseline['avg_inference_time_ms'] > 0 else 0.0
                     
                     print(f"\n{format_type.upper()}:")
                     print(f"  Size Reduction: {size_reduction:.1f}%")

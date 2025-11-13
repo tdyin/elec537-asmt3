@@ -3,7 +3,6 @@ import yaml
 import cv2
 import psutil
 import os
-from datetime import datetime
 from pathlib import Path
 from ultralytics import YOLO
 import numpy as np
