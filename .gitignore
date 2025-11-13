@@ -37,20 +37,13 @@ ENV/
 .ipynb_checkpoints/
 *.ipynb
 
-# Model files (large)
-models/*.pt
-models/*.onnx
-models/*.tflite
+# Model files
+models/
 !models/.gitkeep
 
 # Data and results
-data/*.jpg
-data/*.png
-data/*.mp4
-results/*.jpg
-results/*.png
-results/*.mp4
-results/*.avi
+data/
+results/
 !data/.gitkeep
 !results/.gitkeep
 

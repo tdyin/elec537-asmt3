@@ -1,8 +1,3 @@
-"""
-Task 1: Real-time Object Detection on Raspberry Pi
-Runs YOLO11 model on live camera feed and measures performance metrics.
-"""
-
 import time
 import yaml
 import cv2
@@ -27,7 +22,6 @@ class ObjectDetector:
         self.monitoring = self.config['monitoring']
         
         # Create necessary directories
-        Path(self.paths['captured_frames']).mkdir(parents=True, exist_ok=True)
         Path(self.paths['models_dir']).mkdir(parents=True, exist_ok=True)
         
         # Load model
@@ -47,12 +41,9 @@ class ObjectDetector:
         self.inference_times = []
         self.cpu_usages = []
         self.frame_count = 0
-        self.saved_frames = 0
         
     def initialize_camera(self):
-        """Initialize camera (USB or Pi Camera)."""
         try:
-            # Try USB camera first (for development on non-Pi machines)
             self.cap = cv2.VideoCapture(0)
             if not self.cap.isOpened():
                 raise Exception("Could not open camera")
@@ -95,28 +86,19 @@ class ObjectDetector:
             conf=self.model_config['confidence_threshold'],
             iou=self.model_config['iou_threshold'],
             device=self.model_config['device'],
-            imgsz=imgsz,  # Use smaller image size for speed
+            imgsz=imgsz,  
             verbose=False,
-            half=False,  # Disable FP16 on CPU (not supported)
-            augment=False,  # Disable test-time augmentation
-            max_det=100  # Limit max detections for speed
+            half=False, 
+            augment=False, 
+            max_det=100 
         )
         
-        inference_time = (time.time() - start_time) * 1000  # Convert to ms
+        inference_time = (time.time() - start_time) * 1000 
         
         # Draw results on frame
         annotated_frame = results[0].plot()
         
         return annotated_frame, inference_time, results[0]
-    
-    def save_frame(self, frame, detections):
-        """Save annotated frame to disk."""
-        if self.saved_frames < self.task1_config['max_frames_to_save']:
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = f"{self.paths['captured_frames']}/detection_{timestamp}.jpg"
-            cv2.imwrite(filename, frame)
-            self.saved_frames += 1
-            print(f"Saved frame: {filename} (Detections: {len(detections.boxes)})")
     
     def display_metrics(self, frame, inference_time, cpu_usage):
         """Overlay performance metrics on frame."""
@@ -148,7 +130,6 @@ class ObjectDetector:
         
         print("\n" + "="*60)
         print("Starting object detection...")
-        print("Press 's' to save current frame")
         print("Press 'q' to quit")
         print("="*60 + "\n")
         
@@ -197,8 +178,6 @@ class ObjectDetector:
                 key = cv2.waitKey(1) & 0xFF
                 if key == ord('q'):
                     break
-                elif key == ord('s') and self.task1_config['save_frames']:
-                    self.save_frame(annotated_frame, results)
         
         except KeyboardInterrupt:
             print("\nInterrupted by user")
@@ -241,7 +220,6 @@ class ObjectDetector:
         model_size = self.get_model_size()
         print(f"Model Size: {model_size:.2f} MB")
         print(f"Total Frames Processed: {self.frame_count}")
-        print(f"Frames Saved: {self.saved_frames}")
         print("="*60)
 
 

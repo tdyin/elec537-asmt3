@@ -1,8 +1,3 @@
-"""
-Task 2: Model Optimization and Quantization
-Applies quantization techniques and compares model performance.
-"""
-
 import time
 import yaml
 import cv2

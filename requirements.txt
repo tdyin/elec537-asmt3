@@ -1,32 +1,11 @@
-# Core Dependencies for YOLO11 Object Detection on Raspberry Pi
+# Core Dependencies
 torch>=2.0.0
 torchvision>=0.15.0
-ultralytics>=8.0.0  # YOLO11
+ultralytics>=8.0.0 
 
 # Image Processing
 opencv-python>=4.8.0
-Pillow>=10.0.0
 numpy>=1.24.0
 
 # Performance Monitoring
 psutil>=5.9.0
-
-# Model Optimization
-onnx>=1.14.0
-onnxruntime>=1.15.0
-
-# Data Handling
-pandas>=2.0.0
-matplotlib>=3.7.0
-seaborn>=0.12.0
-
-# Camera Support (Raspberry Pi specific)
-picamera2  # For Raspberry Pi Camera Module 3
-# For older camera modules, use: picamera
-
-# Optional: Edge TPU support
-# pycoral  # Uncomment if using Google Coral Edge TPU
-
-# Development Tools
-jupyter>=1.0.0
-tqdm>=4.65.0

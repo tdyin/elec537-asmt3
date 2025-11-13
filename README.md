@@ -8,7 +8,6 @@ You have freedom in this assignment to use whichever tools or frameworks you pre
 In this task, you will run a lightweight object detection model on your Raspberry Pi using the camera input.
 
 ### (a) Select a pre-trained lightweight model such as MobileNet-SSD, EfficientDet-Lite, or YOLOv5-Nano. You may use TensorFlow Lite (now LiteRT), PyTorch Lite, Edge Impulse, or any other library of your choice. 
-For our setup, we're going to use YOLO11 and PyTorch Lite.
 
 ### (b) Capture live video from the Raspberry Pi camera and perform object detection in real time. Display bounding boxes and class labels on the image frames. Include 2–3 example frames showing correct detections.
 

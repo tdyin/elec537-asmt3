@@ -8,9 +8,7 @@ elec537-asmt3/
 ├── README.md               # Assignment description
 ├── src/                    # Source code
 │   ├── task1_detection.py # Real-time object detection
-│   ├── task2_optimization.py # Model quantization
-│   ├── utils.py           # Utility functions
-│   └── performance.py     # Performance monitoring
+│   └── task2_optimization.py # Model quantization
 ├── models/                 # Model files (downloaded automatically)
 ├── data/                   # Data directory
 │   └── validation/        # Validation images for Task 2
@@ -55,7 +53,8 @@ sudo apt-get install -y python3-pip python3-venv
 
 ### 3. Create Virtual Environment
 ```bash
-cd /Users/yin/Dev/elec537-asmt3
+# Navigate to project directory
+cd elec537-asmt3
 python3 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 ```
@@ -85,8 +84,7 @@ sudo raspi-config
 
 1. **Run the detection script:**
 ```bash
-cd src
-python task1_detection.py
+python src/task1_detection.py
 ```
 
 2. **Controls:**
@@ -114,8 +112,7 @@ python task1_detection.py
 
 2. **Run the optimization script:**
 ```bash
-cd src
-python task2_optimization.py
+python src/task2_optimization.py
 ```
 
 3. **What it does:**
