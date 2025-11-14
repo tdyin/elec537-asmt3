@@ -20,7 +20,6 @@ class ObjectDetector:
         self.task1_config = self.config['task1']
         self.monitoring = self.config['monitoring']
         
-        # Create necessary directories
         Path(self.paths['models_dir']).mkdir(parents=True, exist_ok=True)
         
         # Load model
@@ -40,7 +39,7 @@ class ObjectDetector:
         self.inference_times = []
         self.cpu_usages = []
         self.frame_count = 0
-        self.current_cpu_usage = 0.0  # Track current CPU for live display
+        self.current_cpu_usage = 0.0 
         
     def initialize_camera(self):
         try:
@@ -48,7 +47,6 @@ class ObjectDetector:
             if not self.cap.isOpened():
                 raise Exception("Could not open camera")
             
-            # Set camera resolution
             width, height = self.camera_config['resolution']
             self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
             self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
@@ -77,10 +75,8 @@ class ObjectDetector:
         """Run object detection on a single frame."""
         start_time = time.time()
         
-        # Get image size from config (default 320 for faster inference)
         imgsz = self.model_config.get('imgsz', 320)
         
-        # Run inference with optimizations
         results = self.model(
             frame,
             conf=self.model_config['confidence_threshold'],
@@ -95,13 +91,11 @@ class ObjectDetector:
         
         inference_time = (time.time() - start_time) * 1000 
         
-        # Draw results on frame
         annotated_frame = results[0].plot()
         
         return annotated_frame, inference_time, results[0]
     
     def display_metrics(self, frame, inference_time, cpu_usage):
-        """Overlay performance metrics on frame."""
         avg_inference = np.mean(self.inference_times[-30:]) if self.inference_times else 0
         fps = 1000 / avg_inference if avg_inference > 0 else 0
         
@@ -114,7 +108,6 @@ class ObjectDetector:
         x_offset = int(frame_width * 0.015) 
         y_offset = int(frame_height * 0.05) 
         
-        # Create metrics text
         metrics = [
             f"Inference: {inference_time:.1f}ms",
             f"FPS: {fps:.1f}",
@@ -122,7 +115,6 @@ class ObjectDetector:
             f"Frame: {self.frame_count}"
         ]
         
-        # Draw metrics on frame with adaptive positioning
         for metric in metrics:
             cv2.putText(frame, metric, (x_offset, y_offset), 
                        cv2.FONT_HERSHEY_SIMPLEX, font_scale, (0, 255, 0), thickness)
@@ -131,7 +123,6 @@ class ObjectDetector:
         return frame
     
     def run(self):
-        """Main detection loop."""
         if not self.initialize_camera():
             print("Failed to initialize camera. Exiting.")
             return
@@ -141,8 +132,7 @@ class ObjectDetector:
         print("Press 'q' to quit")
         print("="*60 + "\n")
         
-        # Frame skipping for better performance
-        frame_skip = 0  # Process every frame initially
+        frame_skip = 0 
         skip_counter = 0
         
         try:
@@ -155,7 +145,7 @@ class ObjectDetector:
                 self.frame_count += 1
                 skip_counter += 1
                 
-                # Skip frames if needed (process every Nth frame)
+                # Skip frames if needed 
                 if skip_counter <= frame_skip:
                     continue
                 skip_counter = 0
@@ -163,7 +153,7 @@ class ObjectDetector:
                 # Process frame
                 annotated_frame, inference_time, results = self.process_frame(frame)
                 
-                # Get CPU usage (less frequently to save cycles)
+                # Get CPU usage 
                 if self.frame_count % 5 == 0:
                     self.current_cpu_usage = self.get_cpu_usage()
                     # Record metrics after warmup
@@ -174,10 +164,8 @@ class ObjectDetector:
                 if self.frame_count > self.monitoring['warmup_frames']:
                     self.inference_times.append(inference_time)
                 
-                # Display metrics with live CPU value
                 display_frame = self.display_metrics(annotated_frame, inference_time, self.current_cpu_usage)
                 
-                # Show frame
                 if self.task1_config['display_preview']:
                     cv2.imshow('Object Detection', display_frame)
                 
