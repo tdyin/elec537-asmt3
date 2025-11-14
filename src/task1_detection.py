@@ -40,6 +40,7 @@ class ObjectDetector:
         self.inference_times = []
         self.cpu_usages = []
         self.frame_count = 0
+        self.current_cpu_usage = 0.0  # Track current CPU for live display
         
     def initialize_camera(self):
         try:
@@ -107,7 +108,7 @@ class ObjectDetector:
         frame_height, frame_width = frame.shape[:2]
         
         font_scale = max(0.4, min(0.8, frame_height / 800))
-        thickness = max(1, int(font_scale * 2))
+        thickness = max(1, int(font_scale * 4))
         line_spacing = int(frame_height * 0.08)  
         
         x_offset = int(frame_width * 0.015) 
@@ -164,18 +165,17 @@ class ObjectDetector:
                 
                 # Get CPU usage (less frequently to save cycles)
                 if self.frame_count % 5 == 0:
-                    cpu_usage = self.get_cpu_usage()
-                else:
-                    cpu_usage = 0
+                    self.current_cpu_usage = self.get_cpu_usage()
+                    # Record metrics after warmup
+                    if self.frame_count > self.monitoring['warmup_frames']:
+                        self.cpu_usages.append(self.current_cpu_usage)
                 
-                # Record metrics after warmup
+                # Record inference time after warmup
                 if self.frame_count > self.monitoring['warmup_frames']:
                     self.inference_times.append(inference_time)
-                    if cpu_usage > 0:  # Only record when actually measured
-                        self.cpu_usages.append(cpu_usage)
                 
-                # Display metrics
-                display_frame = self.display_metrics(annotated_frame, inference_time, cpu_usage)
+                # Display metrics with live CPU value
+                display_frame = self.display_metrics(annotated_frame, inference_time, self.current_cpu_usage)
                 
                 # Show frame
                 if self.task1_config['display_preview']:
