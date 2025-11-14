@@ -108,7 +108,7 @@ class ObjectDetector:
         
         font_scale = max(0.4, min(0.8, frame_height / 800))
         thickness = max(1, int(font_scale * 2))
-        line_spacing = int(frame_height * 0.04)  
+        line_spacing = int(frame_height * 0.08)  
         
         x_offset = int(frame_width * 0.015) 
         y_offset = int(frame_height * 0.05) 
