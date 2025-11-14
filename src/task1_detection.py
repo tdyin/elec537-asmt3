@@ -104,20 +104,28 @@ class ObjectDetector:
         avg_inference = np.mean(self.inference_times[-30:]) if self.inference_times else 0
         fps = 1000 / avg_inference if avg_inference > 0 else 0
         
+        frame_height, frame_width = frame.shape[:2]
+        
+        font_scale = max(0.4, min(0.8, frame_height / 800))
+        thickness = max(1, int(font_scale * 2))
+        line_spacing = int(frame_height * 0.04)  
+        
+        x_offset = int(frame_width * 0.015) 
+        y_offset = int(frame_height * 0.05) 
+        
         # Create metrics text
         metrics = [
-            f"Inference: {inference_time:.1f}ms (Avg: {avg_inference:.1f}ms)",
+            f"Inference: {inference_time:.1f}ms",
             f"FPS: {fps:.1f}",
             f"CPU: {cpu_usage:.1f}%",
             f"Frame: {self.frame_count}"
         ]
         
-        # Draw metrics on frame
-        y_offset = 30
+        # Draw metrics on frame with adaptive positioning
         for metric in metrics:
-            cv2.putText(frame, metric, (10, y_offset), 
-                       cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
-            y_offset += 30
+            cv2.putText(frame, metric, (x_offset, y_offset), 
+                       cv2.FONT_HERSHEY_SIMPLEX, font_scale, (0, 255, 0), thickness)
+            y_offset += line_spacing
         
         return frame
     
