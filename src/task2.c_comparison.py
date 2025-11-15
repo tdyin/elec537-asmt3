@@ -8,6 +8,13 @@ import yaml
 from pathlib import Path
 from ultralytics import YOLO
 
+try:
+    import onnxruntime as ort
+    ONNX_AVAILABLE = True
+except ImportError:
+    ONNX_AVAILABLE = False
+    print("Warning: onnxruntime not available. Install with: pip install onnxruntime")
+
 
 class ModelComparison:
     def __init__(self, config_path="config.yaml"):
@@ -37,13 +44,13 @@ class ModelComparison:
         if fp32_path.exists():
             exported_models['fp32'] = str(fp32_path)
         
-        # Check for FP16
-        fp16_path = models_dir / f"{model_name}_fp16.torchscript"
+        # Check for FP16 ONNX
+        fp16_path = models_dir / f"{model_name}_fp16.onnx"
         if fp16_path.exists():
             exported_models['fp16'] = str(fp16_path)
         
-        # Check for INT8
-        int8_path = models_dir / f"{model_name}_int8.torchscript"
+        # Check for INT8 ONNX
+        int8_path = models_dir / f"{model_name}_int8.onnx"
         if int8_path.exists():
             exported_models['int8'] = str(int8_path)
         
@@ -59,6 +66,34 @@ class ModelComparison:
         
         return images
     
+    def _preprocess_image_for_onnx(self, img):
+        """Preprocess image for ONNX model input"""
+        img_resized = cv2.resize(img, (320, 320))
+        # Convert BGR to RGB
+        img_rgb = cv2.cvtColor(img_resized, cv2.COLOR_BGR2RGB)
+        # Normalize to [0, 1] and convert to float32
+        img_normalized = img_rgb.astype(np.float32) / 255.0
+        # Transpose to CHW format
+        img_chw = np.transpose(img_normalized, (2, 0, 1))
+        # Add batch dimension
+        img_batch = np.expand_dims(img_chw, axis=0)
+        return img_batch
+    
+    def _count_detections_from_onnx(self, outputs, conf_threshold):
+        """Count detections from ONNX model output"""
+        # YOLO ONNX output format: [batch, num_predictions, 84]
+        # 84 = 4 (bbox) + 80 (classes)
+        predictions = outputs[0][0]  # Get first batch
+        
+        # Filter by confidence
+        # Get max class confidence for each prediction
+        class_confs = predictions[:, 4:]
+        max_conf = np.max(class_confs, axis=1)
+        
+        # Count detections above threshold
+        num_detections = np.sum(max_conf > conf_threshold)
+        return int(num_detections)
+    
     def benchmark_model(self, model_path, format_type, validation_images):
         print(f"Benchmarking {format_type}...", end=" ")
         
@@ -68,13 +103,26 @@ class ModelComparison:
             mem_before_load = process.memory_info().rss / (1024 * 1024)  # MB
             
             # Load model based on format
+            model = None
+            ort_session = None
+            
             if format_type == "fp32":
                 model = YOLO(model_path)
-            elif format_type == "fp16":
-                model = YOLO(model_path, task='detect')
-            elif format_type == "int8":
-                # For ONNX models, use YOLO with ONNX backend
-                model = YOLO(model_path, task='detect')
+            elif format_type in ["fp16", "int8"]:
+                # Use ONNX Runtime for quantized models
+                if not ONNX_AVAILABLE:
+                    print("Failed: onnxruntime not available")
+                    return None
+                
+                # Configure ONNX Runtime session
+                sess_options = ort.SessionOptions()
+                sess_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
+                
+                ort_session = ort.InferenceSession(
+                    model_path,
+                    sess_options=sess_options,
+                    providers=['CPUExecutionProvider']
+                )
             else:
                 model = YOLO(model_path)
             
@@ -89,8 +137,13 @@ class ModelComparison:
             
             # Warmup
             dummy_img = np.zeros((640, 640, 3), dtype=np.uint8)
-            for _ in range(5):
-                _ = model(dummy_img, verbose=False)
+            if model:
+                for _ in range(5):
+                    _ = model(dummy_img, verbose=False)
+            elif ort_session:
+                dummy_input = self._preprocess_image_for_onnx(dummy_img)
+                for _ in range(5):
+                    _ = ort_session.run(None, {ort_session.get_inputs()[0].name: dummy_input})
             
             # Benchmark on validation images
             for img_path in validation_images:
@@ -101,8 +154,20 @@ class ModelComparison:
                 # Measure inference time and memory
                 mem_before = process.memory_info().rss / (1024 * 1024)  # MB
                 start_time = time.time()
-                results = model(img, conf=self.model_config['confidence_threshold'], 
-                              verbose=False)
+                
+                if model:
+                    # Use YOLO model for FP32
+                    results = model(img, conf=self.model_config['confidence_threshold'], 
+                                  verbose=False)
+                    num_detections = len(results[0].boxes)
+                elif ort_session:
+                    # Use ONNX Runtime for quantized models
+                    input_tensor = self._preprocess_image_for_onnx(img)
+                    outputs = ort_session.run(None, {ort_session.get_inputs()[0].name: input_tensor})
+                    num_detections = self._count_detections_from_onnx(outputs, self.model_config['confidence_threshold'])
+                else:
+                    num_detections = 0
+                
                 inference_time = (time.time() - start_time) * 1000
                 mem_after = process.memory_info().rss / (1024 * 1024)  # MB
                 mem_usage = mem_after - mem_before
@@ -111,9 +176,9 @@ class ModelComparison:
                 memory_usages.append(mem_after)  # Track total memory in use
                 
                 # Count detections
-                if len(results[0].boxes) > 0:
-                    total_detections += len(results[0].boxes)
-                    correct_detections += len(results[0].boxes)  # Simplified accuracy
+                if num_detections > 0:
+                    total_detections += num_detections
+                    correct_detections += num_detections  # Simplified accuracy
             
             # Calculate metrics
             avg_inference_time = np.mean(inference_times) if inference_times else 0
