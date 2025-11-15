@@ -7,7 +7,6 @@ from ultralytics import YOLO
 
 class ModelOptimizer:
     def __init__(self, config_path="config.yaml"):
-        """Initialize the model optimizer with configuration."""
         with open(config_path, 'r') as f:
             self.config = yaml.safe_load(f)
         
@@ -20,8 +19,6 @@ class ModelOptimizer:
         Path(self.paths['validation_images']).mkdir(parents=True, exist_ok=True)
         Path(f"{self.paths['results_dir']}/task2").mkdir(parents=True, exist_ok=True)
         
-        # Load base model
-        print(f"Loading base {self.model_config['name']} model...")
         self.base_model_path = f"{self.paths['models_dir']}/{self.model_config['name']}.pt"
         
         if not os.path.exists(self.base_model_path):
@@ -30,7 +27,6 @@ class ModelOptimizer:
             model.save(self.base_model_path)
     
     def export_quantized_models(self):
-        """Export models in different quantization formats."""
         print("\n" + "="*60)
         print("EXPORTING QUANTIZED MODELS")
         print("="*60)
@@ -90,7 +86,5 @@ if __name__ == "__main__":
     
     # Export quantized models
     exported_models = optimizer.export_quantized_models()
-    
-    print("\nModel optimization complete!")
+    print("\nEXPORT COMPLETED")
     print(f"Exported models: {list(exported_models.keys())}")
-    print("\nRun task2_comparison.py to benchmark and compare the models.")

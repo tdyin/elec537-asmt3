@@ -10,7 +10,6 @@ import numpy as np
 
 class ObjectDetector:
     def __init__(self, config_path="config.yaml"):
-        """Initialize the object detector with configuration."""
         with open(config_path, 'r') as f:
             self.config = yaml.safe_load(f)
         
@@ -23,7 +22,6 @@ class ObjectDetector:
         Path(self.paths['models_dir']).mkdir(parents=True, exist_ok=True)
         
         # Load model
-        print(f"Loading {self.model_config['name']} model...")
         model_path = f"{self.paths['models_dir']}/{self.model_config['name']}.pt"
         
         if not os.path.exists(model_path):
@@ -59,11 +57,9 @@ class ObjectDetector:
             return False
     
     def get_cpu_usage(self):
-        """Get current CPU utilization."""
         return psutil.cpu_percent(interval=0.1)
     
     def get_model_size(self):
-        """Get model size in MB."""
         model_path = f"{self.paths['models_dir']}/{self.model_config['name']}.pt"
         if os.path.exists(model_path):
             size_bytes = os.path.getsize(model_path)
@@ -72,7 +68,6 @@ class ObjectDetector:
         return 0
     
     def process_frame(self, frame):
-        """Run object detection on a single frame."""
         start_time = time.time()
         
         imgsz = self.model_config.get('imgsz', 320)
@@ -182,13 +177,11 @@ class ObjectDetector:
             self.print_summary()
     
     def cleanup(self):
-        """Release resources."""
         if hasattr(self, 'cap'):
             self.cap.release()
         cv2.destroyAllWindows()
     
     def print_summary(self):
-        """Print performance summary."""
         print("\n" + "="*60)
         print("PERFORMANCE SUMMARY")
         print("="*60)

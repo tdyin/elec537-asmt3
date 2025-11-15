@@ -30,7 +30,6 @@ task2:
       - "fp32"      # Baseline floating point
       - "fp16"      # Half precision
       - "int8"      # Integer quantization
-  validation_set_size: 50  # Number of images for accuracy evaluation
   
 # Performance Monitoring
 monitoring:
