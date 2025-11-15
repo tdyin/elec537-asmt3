@@ -1,5 +1,6 @@
 import os
 import time
+import json
 
 import cv2
 import numpy as np
@@ -17,10 +18,13 @@ except ImportError:
 
 
 class ModelComparison:
-    def __init__(self, config_path="config.yaml"):
+    def __init__(self, config_path="config.yaml", coco_classes_path="coco_classes.json"):
         with open(config_path, 'r') as f:
             self.config = yaml.safe_load(f)
         
+        with open(coco_classes_path, 'r') as f:
+            self.coco_classes = json.load(f)
+
         self.model_config = self.config['model']
         self.paths = self.config['paths']
         self.task2_config = self.config['task2']
@@ -72,11 +76,13 @@ class ModelComparison:
         return images
     
     def get_ground_truth(self, img_path):
+        """Extract ground truth from parent folder name"""
         folder_name = Path(img_path).parent.name.lower()
-        if folder_name == 'cat':
-            return 'cat', 15
-        elif folder_name == 'dog':
-            return 'dog', 16
+        class_id = self.coco_classes.get(folder_name)
+        
+        if class_id is not None:
+            return folder_name, class_id
+        
         return None, None
     
     def _preprocess_image_for_onnx(self, img):
