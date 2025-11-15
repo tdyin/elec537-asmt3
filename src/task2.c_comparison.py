@@ -63,6 +63,10 @@ class ModelComparison:
         print(f"Benchmarking {format_type}...", end=" ")
         
         try:
+            # Get memory before loading model
+            process = psutil.Process()
+            mem_before_load = process.memory_info().rss / (1024 * 1024)  # MB
+            
             # Load model based on format
             if format_type == "fp32":
                 model = YOLO(model_path)
@@ -74,7 +78,12 @@ class ModelComparison:
             else:
                 model = YOLO(model_path)
             
+            # Get memory after loading model
+            mem_after_load = process.memory_info().rss / (1024 * 1024)  # MB
+            model_memory = mem_after_load - mem_before_load
+            
             inference_times = []
+            memory_usages = []
             correct_detections = 0
             total_detections = 0
             
@@ -89,13 +98,17 @@ class ModelComparison:
                 if img is None:
                     continue
                 
-                # Measure inference time
+                # Measure inference time and memory
+                mem_before = process.memory_info().rss / (1024 * 1024)  # MB
                 start_time = time.time()
                 results = model(img, conf=self.model_config['confidence_threshold'], 
                               verbose=False)
                 inference_time = (time.time() - start_time) * 1000
+                mem_after = process.memory_info().rss / (1024 * 1024)  # MB
+                mem_usage = mem_after - mem_before
                 
                 inference_times.append(inference_time)
+                memory_usages.append(mem_after)  # Track total memory in use
                 
                 # Count detections
                 if len(results[0].boxes) > 0:
@@ -109,6 +122,10 @@ class ModelComparison:
             # Get CPU usage during inference
             cpu_usage = psutil.cpu_percent(interval=1.0)
             
+            # Calculate memory metrics
+            avg_memory_usage = np.mean(memory_usages) if memory_usages else 0
+            peak_memory_usage = np.max(memory_usages) if memory_usages else 0
+            
             metrics = {
                 'format': format_type,
                 'model_path': model_path,
@@ -118,6 +135,9 @@ class ModelComparison:
                 'max_inference_time_ms': round(np.max(inference_times), 2) if inference_times else 0,
                 'avg_fps': round(1000 / avg_inference_time, 2) if avg_inference_time > 0 else 0,
                 'cpu_usage_percent': round(cpu_usage, 2),
+                'model_memory_mb': round(model_memory, 2),
+                'avg_memory_mb': round(avg_memory_usage, 2),
+                'peak_memory_mb': round(peak_memory_usage, 2),
                 'total_detections': total_detections,
                 'images_tested': len(validation_images)
             }
@@ -171,6 +191,9 @@ class ModelComparison:
             print(f"  Max Inference Time: {metrics['max_inference_time_ms']} ms")
             print(f"  Average FPS: {metrics['avg_fps']}")
             print(f"  CPU Usage: {metrics['cpu_usage_percent']}%")
+            print(f"  Model Memory: {metrics['model_memory_mb']} MB")
+            print(f"  Average Memory Usage: {metrics['avg_memory_mb']} MB")
+            print(f"  Peak Memory Usage: {metrics['peak_memory_mb']} MB")
             print(f"  Total Detections: {metrics['total_detections']}")
             print(f"  Images Tested: {metrics['images_tested']}")
         
