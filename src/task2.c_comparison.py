@@ -136,7 +136,7 @@ class ModelComparison:
             total_detections = 0
             
             # Warmup
-            dummy_img = np.zeros((640, 640, 3), dtype=np.uint8)
+            dummy_img = np.zeros((320, 320, 3), dtype=np.uint8)
             if model:
                 for _ in range(5):
                     _ = model(dummy_img, verbose=False)
