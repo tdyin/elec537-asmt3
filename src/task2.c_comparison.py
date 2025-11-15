@@ -68,7 +68,7 @@ class ModelComparison:
     
     def _preprocess_image_for_onnx(self, img):
         """Preprocess image for ONNX model input"""
-        img_resized = cv2.resize(img, (320, 320))
+        img_resized = cv2.resize(img, (640, 640))
         # Convert BGR to RGB
         img_rgb = cv2.cvtColor(img_resized, cv2.COLOR_BGR2RGB)
         # Normalize to [0, 1] and convert to float32
@@ -136,7 +136,7 @@ class ModelComparison:
             total_detections = 0
             
             # Warmup
-            dummy_img = np.zeros((320, 320, 3), dtype=np.uint8)
+            dummy_img = np.zeros((640, 640, 3), dtype=np.uint8)
             if model:
                 for _ in range(5):
                     _ = model(dummy_img, verbose=False)
