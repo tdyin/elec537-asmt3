@@ -45,37 +45,23 @@ class ModelComparison:
    
     def collect_validation_images(self):
         val_dir = Path(self.paths['validation_images'])
-        # Collect images from all subdirectories
         images = []
         if val_dir.exists():
             for subfolder in val_dir.iterdir():
                 if subfolder.is_dir():
                     images.extend(list(subfolder.glob("*.jpg")))
-        
-        if len(images) == 0:
-            print(f"\nNo validation images found in {val_dir}")
-            return []
-        
-        return images
+        return images if images else []
     
     def get_ground_truth(self, img_path):
-        """Extract ground truth from parent folder name"""
         folder_name = Path(img_path).parent.name.lower()
         class_id = self.coco_classes.get(folder_name)
-        
-        if class_id is not None:
-            return folder_name, class_id
-        
-        return None, None
+        return (folder_name, class_id) if class_id is not None else (None, None)
     
     def _extract_detections(self, model_handler, results):
-        """Extract detected classes from model results"""
         if model_handler.model:
-            # PyTorch model
             num_detections = len(results[0].boxes)
             detected_classes = results[0].boxes.cls.cpu().numpy().astype(int) if num_detections > 0 else []
         else:
-            # ONNX model
             detected_classes, _ = results
         return detected_classes
     
@@ -92,20 +78,14 @@ class ModelComparison:
             mem_after_load = process.memory_info().rss / (1024 * 1024)
             model_memory = mem_after_load - mem_before_load
             
-            inference_times = []
-            memory_usages = []
-            true_positives = 0
-            false_positives = 0
-            false_negatives = 0
-            total_images = 0
-            total_detections = 0
+            inference_times, memory_usages = [], []
+            true_positives, false_positives, false_negatives = 0, 0, 0
+            total_images, total_detections = 0, 0
             
-            # Warmup
             dummy_img = np.zeros((640, 640, 3), dtype=np.uint8)
             for _ in range(5):
                 _ = model_handler.predict(dummy_img, verbose=False)
             
-            # Benchmark on validation images
             for img_path in validation_images:
                 img = cv2.imread(str(img_path))
                 if img is None:
@@ -117,9 +97,7 @@ class ModelComparison:
                 mem_before = process.memory_info().rss / (1024 * 1024)
                 start_time = time.time()
                 
-                results = model_handler.predict(
-                    img, conf_threshold=self.model_config['confidence_threshold'], verbose=False
-                )
+                results = model_handler.predict(img, conf_threshold=self.model_config['confidence_threshold'], verbose=False)
                 
                 inference_time = (time.time() - start_time) * 1000
                 mem_after = process.memory_info().rss / (1024 * 1024)
@@ -130,22 +108,21 @@ class ModelComparison:
                 detected_classes = self._extract_detections(model_handler, results)
                 total_detections += len(detected_classes)
                 
-                # Calculate accuracy metrics
                 if gt_class_id is not None:
                     if gt_class_id in detected_classes:
                         true_positives += 1
                     else:
                         false_negatives += 1
-                    other_detections = len([c for c in detected_classes if c != gt_class_id])
-                    false_positives += other_detections
+                    false_positives += len([c for c in detected_classes if c != gt_class_id])
             
-            # Calculate metrics
             min_inf, max_inf, avg_inf = calculate_metrics(inference_times)
-            cpu_usage = psutil.cpu_percent(interval=1.0)
             _, peak_mem, avg_mem = calculate_metrics(memory_usages)
+            cpu_usage = psutil.cpu_percent(interval=1.0)
             
-            precision = true_positives / (true_positives + false_positives) if (true_positives + false_positives) > 0 else 0
-            recall = true_positives / (true_positives + false_negatives) if (true_positives + false_negatives) > 0 else 0
+            denom_p = true_positives + false_positives
+            denom_r = true_positives + false_negatives
+            precision = true_positives / denom_p if denom_p > 0 else 0
+            recall = true_positives / denom_r if denom_r > 0 else 0
             f1_score = 2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0
             accuracy = true_positives / total_images if total_images > 0 else 0
             
@@ -180,21 +157,13 @@ class ModelComparison:
             return None
  
     def run_benchmarks(self):
-        print("\nBenchmarking models...")
-        
         exported_models = self.get_exported_models()
-        
         if not exported_models:
-            print("Error: No exported models found. Run task2_optimization.py first.")
+            print("Error: No exported models found. Run task2.b_optimization.py first.")
             return False
         
-        # Collect validation images
         validation_images = self.collect_validation_images()
         
-        if len(validation_images) == 0:
-            print("Warning: No validation images found. Proceeding with basic measurements only.")
-        
-        # Benchmark each model
         for format_type, model_path in exported_models.items():
             metrics = self.benchmark_model(model_path, format_type, validation_images)
             if metrics:
@@ -237,15 +206,10 @@ class ModelComparison:
         print("="*80)
     
     def run_comparison(self):
-        print("\nTASK 2: MODEL QUANTIZATION COMPARISON")
-        print("="*60)
-        
-        # Check if we need to run benchmarks first
+        print("\nTask 2: Model Quantization Comparison")
         if not self.results:
             if not self.run_benchmarks():
                 return
-        
-        # Display detailed metrics
         self.display_detailed_metrics()
 
 

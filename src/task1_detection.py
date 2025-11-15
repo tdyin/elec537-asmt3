@@ -18,11 +18,7 @@ class ObjectDetector:
             self.model_config['name'], self.paths['models_dir']
         )
         self.model = ModelHandler(model_path, "fp32")
-        print("Model loaded successfully!")
-        
-        # Performance metrics
-        self.inference_times = []
-        self.cpu_usages = []
+        self.inference_times, self.cpu_usages = [], []
         self.frame_count = 0
         self.current_cpu_usage = 0.0 
         
@@ -36,8 +32,6 @@ class ObjectDetector:
             self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
             self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
             self.cap.set(cv2.CAP_PROP_FPS, self.camera_config['fps'])
-            
-            print(f"Camera initialized: {width}x{height} @ {self.camera_config['fps']}fps")
             return True
         except Exception as e:
             print(f"Error initializing camera: {e}")
@@ -88,16 +82,10 @@ class ObjectDetector:
     
     def run(self):
         if not self.initialize_camera():
-            print("Failed to initialize camera. Exiting.")
             return
         
-        print("\n" + "="*60)
-        print("Starting object detection...")
-        print("Press 'q' to quit")
-        print("="*60 + "\n")
-        
-        frame_skip = 0 
-        skip_counter = 0
+        print("\nStarting object detection (Press 'q' to quit)\n")
+        frame_skip, skip_counter = 0, 0
         
         try:
             while True:
@@ -109,22 +97,17 @@ class ObjectDetector:
                 self.frame_count += 1
                 skip_counter += 1
                 
-                # Skip frames if needed 
                 if skip_counter <= frame_skip:
                     continue
                 skip_counter = 0
                 
-                # Process frame
                 annotated_frame, inference_time, results = self.process_frame(frame)
                 
-                # Get CPU usage 
                 if self.frame_count % 5 == 0:
                     self.current_cpu_usage = get_cpu_usage()
-                    # Record metrics after warmup
                     if self.frame_count > self.monitoring['warmup_frames']:
                         self.cpu_usages.append(self.current_cpu_usage)
                 
-                # Record inference time after warmup
                 if self.frame_count > self.monitoring['warmup_frames']:
                     self.inference_times.append(inference_time)
                 
@@ -133,14 +116,11 @@ class ObjectDetector:
                 if self.task1_config['display_preview']:
                     cv2.imshow('Object Detection', display_frame)
                 
-                # Handle keyboard input
-                key = cv2.waitKey(1) & 0xFF
-                if key == ord('q'):
+                if cv2.waitKey(1) & 0xFF == ord('q'):
                     break
         
         except KeyboardInterrupt:
-            print("\nInterrupted by user")
-        
+            pass
         finally:
             self.cleanup()
             self.print_summary()
