@@ -16,7 +16,6 @@ model:
 paths:
   models_dir: "./models"
   data_dir: "./data"
-  results_dir: "./results"
   validation_images: "./data/validation"
 
 # Task 1 Settings

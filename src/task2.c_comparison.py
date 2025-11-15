@@ -1,4 +1,3 @@
-import json
 import os
 import time
 
@@ -18,7 +17,6 @@ class ModelComparison:
         self.model_config = self.config['model']
         self.paths = self.config['paths']
         self.task2_config = self.config['task2']
-        self.results_file = f"{self.paths['results_dir']}/task2/quantization_results.json"
         self.results = {}
     
     def get_model_size(self, model_path):
@@ -27,10 +25,33 @@ class ModelComparison:
             size_mb = size_bytes / (1024 * 1024)
             return size_mb
         return 0
-    
+       
+    def get_exported_models(self):
+        models_dir = Path(self.paths['models_dir'])
+        model_name = self.model_config['name']
+        
+        exported_models = {}
+        
+        # Check for FP32 (original model)
+        fp32_path = models_dir / f"{model_name}.pt"
+        if fp32_path.exists():
+            exported_models['fp32'] = str(fp32_path)
+        
+        # Check for FP16
+        fp16_path = models_dir / f"{model_name}_fp16.torchscript"
+        if fp16_path.exists():
+            exported_models['fp16'] = str(fp16_path)
+        
+        # Check for INT8
+        int8_path = models_dir / f"{model_name}_int8.torchscript"
+        if int8_path.exists():
+            exported_models['int8'] = str(int8_path)
+        
+        return exported_models
+   
     def collect_validation_images(self):
         val_dir = Path(self.paths['validation_images'])
-        images = list(val_dir.glob("*.jpg")) + list(val_dir.glob("*.png"))
+        images = list(val_dir.glob("*.jpg"))
         
         if len(images) == 0:
             print(f"\nNo validation images found in {val_dir}")
@@ -39,7 +60,6 @@ class ModelComparison:
         return images
     
     def benchmark_model(self, model_path, format_type, validation_images):
-        """Benchmark a single model variant."""
         print(f"Benchmarking {format_type}...", end=" ")
         
         try:
@@ -109,36 +129,10 @@ class ModelComparison:
         except Exception as e:
             print(f"Failed: {e}")
             return None
-    
-    def get_exported_models(self):
-        """Get list of exported model files."""
-        models_dir = Path(self.paths['models_dir'])
-        model_name = self.model_config['name']
-        
-        exported_models = {}
-        
-        # Check for FP32 (original model)
-        fp32_path = models_dir / f"{model_name}.pt"
-        if fp32_path.exists():
-            exported_models['fp32'] = str(fp32_path)
-        
-        # Check for FP16
-        fp16_path = models_dir / f"{model_name}_fp16.torchscript"
-        if fp16_path.exists():
-            exported_models['fp16'] = str(fp16_path)
-        
-        # Check for INT8
-        int8_path = models_dir / f"{model_name}_int8.torchscript"
-        if int8_path.exists():
-            exported_models['int8'] = str(int8_path)
-        
-        return exported_models
-    
+ 
     def run_benchmarks(self):
-        """Run benchmarks on all exported models."""
         print("\nBenchmarking models...")
         
-        # Get exported models
         exported_models = self.get_exported_models()
         
         if not exported_models:
@@ -157,36 +151,17 @@ class ModelComparison:
             if metrics:
                 self.results[format_type] = metrics
         
-        # Save results
-        self.save_results()
         return True
     
-    def save_results(self):
-        """Save results to JSON file."""
-        with open(self.results_file, 'w') as f:
-            json.dump(self.results, f, indent=2)
-        print(f"Results saved to {self.results_file}")
-    
-    def load_results(self):
-        """Load benchmark results from JSON file."""
-        if not Path(self.results_file).exists():
-            return {}
-        
-        with open(self.results_file, 'r') as f:
-            return json.load(f)
-    
     def display_detailed_metrics(self):
-        """Display detailed metrics for each model."""
-        results = self.results if self.results else self.load_results()
-        
-        if not results:
+        if not self.results:
             return
         
         print("\n" + "="*80)
         print("DETAILED METRICS")
         print("="*80)
         
-        for format_type, metrics in results.items():
+        for format_type, metrics in self.results.items():
             print(f"\n{format_type.upper()} Model:")
             print("-" * 40)
             print(f"  Model Path: {metrics['model_path']}")
