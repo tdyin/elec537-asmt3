@@ -18,7 +18,7 @@ except ImportError:
 
 
 class ModelComparison:
-    def __init__(self, config_path="config.yaml", coco_classes_path="coco_classes.json"):
+    def __init__(self, config_path="src/config.yaml", coco_classes_path="data/coco_classes.json"):
         with open(config_path, 'r') as f:
             self.config = yaml.safe_load(f)
         
