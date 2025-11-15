@@ -70,13 +70,8 @@ class ModelComparison:
         
         try:
             process = psutil.Process()
-            mem_before_load = process.memory_info().rss / (1024 * 1024)
             
-            # Load model using ModelHandler
             model_handler = ModelHandler(model_path, format_type)
-            
-            mem_after_load = process.memory_info().rss / (1024 * 1024)
-            model_memory = mem_after_load - mem_before_load
             
             inference_times, memory_usages = [], []
             true_positives, false_positives, false_negatives = 0, 0, 0
@@ -135,7 +130,6 @@ class ModelComparison:
                 'max_inference_time_ms': round(max_inf, 2),
                 'avg_fps': round(1000 / avg_inf, 2) if avg_inf > 0 else 0,
                 'cpu_usage_percent': round(cpu_usage, 2),
-                'model_memory_mb': round(model_memory, 2),
                 'avg_memory_mb': round(avg_mem, 2),
                 'peak_memory_mb': round(peak_mem, 2),
                 'total_detections': total_detections,
@@ -189,7 +183,6 @@ class ModelComparison:
             print(f"  Max Inference Time: {metrics['max_inference_time_ms']} ms")
             print(f"  Average FPS: {metrics['avg_fps']}")
             print(f"  CPU Usage: {metrics['cpu_usage_percent']}%")
-            print(f"  Model Memory: {metrics['model_memory_mb']} MB")
             print(f"  Average Memory Usage: {metrics['avg_memory_mb']} MB")
             print(f"  Peak Memory Usage: {metrics['peak_memory_mb']} MB")
             print(f"  Total Detections: {metrics['total_detections']}")
