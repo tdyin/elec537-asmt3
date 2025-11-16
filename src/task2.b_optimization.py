@@ -41,6 +41,11 @@ class ModelOptimizer:
                     # Use NCNN format which supports FP16 on CPU
                     export_path = f"{self.paths['models_dir']}/{self.model_config['name']}_fp16_ncnn_model"
                     try:
+                        import shutil
+                        # Remove existing directory if it exists
+                        if os.path.exists(export_path):
+                            shutil.rmtree(export_path)
+                        
                         model.export(format='ncnn', half=True)
                         # NCNN creates a directory with .param and .bin files
                         default_export = self.base_model_path.replace('.pt', '_ncnn_model')
