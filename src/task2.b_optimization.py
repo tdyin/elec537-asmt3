@@ -42,23 +42,12 @@ class ModelOptimizer:
                 
                 elif format_type == "fp16":
                     export_path = f"{self.paths['models_dir']}/{self.model_config['name']}_fp16.onnx"
-                    model.export(format='onnx', half=False, simplify=True, opset=17)
+                    model.export(format='onnx', half=True, simplify=True, opset=17)
                     default_export = self.base_model_path.replace('.pt', '.onnx')
-                    
                     if os.path.exists(default_export):
-                        model_fp16 = float16.convert_float_to_float16(
-                            onnx.load(default_export),
-                            keep_io_types=False,
-                            min_positive_val=1e-7,
-                            max_finite_val=1e4, 
-                            disable_shape_infer=False,
-                            op_block_list=None, 
-                            node_block_list=None
-                        )
-                        onnx.save(model_fp16, export_path)
-                        os.remove(default_export)
-                        exported_models[format_type] = export_path
-                        print(f"Exported {format_type.upper()}: {get_model_size(export_path):.2f} MB")
+                        os.rename(default_export, export_path)
+                    exported_models[format_type] = export_path
+                    print(f"Exported {format_type.upper()}: {get_model_size(export_path):.2f} MB")
 
                 elif format_type == "int8":
                     export_path = f"{self.paths['models_dir']}/{self.model_config['name']}_int8.onnx"
