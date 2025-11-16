@@ -13,3 +13,4 @@ psutil>=5.9.0
 # ONNX Runtime for quantized model inference
 onnxruntime>=1.16.0
 onnx>=1.15.0
+onnxconverter-common>=1.14.0
