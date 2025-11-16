@@ -25,9 +25,9 @@ class ModelHandler:
     
     def _load_model(self):
         """Load model based on type"""
-        if self.model_type == "fp32":
-            self.model = YOLO(self.model_path)
-        elif self.model_type in ["fp16", "int8"] and ONNX_AVAILABLE:
+        if self.model_path.endswith('.pt'):
+            self.model = YOLO(self.model_path, task='detect')
+        elif self.model_path.endswith('.onnx') and ONNX_AVAILABLE:
             sess_options = ort.SessionOptions()
             sess_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
             self.ort_session = ort.InferenceSession(
@@ -53,7 +53,13 @@ class ModelHandler:
         img_rgb = cv2.cvtColor(img_resized, cv2.COLOR_BGR2RGB)
         img_normalized = img_rgb.astype(np.float32) / 255.0
         img_chw = np.transpose(img_normalized, (2, 0, 1))
-        return np.expand_dims(img_chw, axis=0)
+        img_batch = np.expand_dims(img_chw, axis=0)
+        
+        # Convert to fp16 if model expects fp16 input
+        if self.ort_session and self.ort_session.get_inputs()[0].type == 'tensor(float16)':
+            img_batch = img_batch.astype(np.float16)
+        
+        return img_batch
     
     def _postprocess_onnx(self, outputs, conf_threshold):
         """Extract detections from ONNX output"""

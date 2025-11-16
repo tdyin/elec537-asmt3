@@ -30,7 +30,7 @@ class ModelOptimizer:
             try:
                 if format_type == "fp32":
                     export_path = f"{self.paths['models_dir']}/{self.model_config['name']}_fp32.onnx"
-                    model.export(format='onnx', half=False, simplify=True, opset=12)
+                    model.export(format='onnx', half=False, simplify=True, opset=17)
                     default_export = self.base_model_path.replace('.pt', '.onnx')
                     if os.path.exists(default_export):
                         os.rename(default_export, export_path)
@@ -39,7 +39,7 @@ class ModelOptimizer:
                 
                 elif format_type == "fp16":
                     export_path = f"{self.paths['models_dir']}/{self.model_config['name']}_fp16.onnx"
-                    model.export(format='onnx', half=True, simplify=True, opset=12)
+                    model.export(format='onnx', half=True, simplify=True, opset=17)
                     default_export = self.base_model_path.replace('.pt', '.onnx')
                     if os.path.exists(default_export):
                         os.rename(default_export, export_path)
@@ -48,7 +48,7 @@ class ModelOptimizer:
                 
                 elif format_type == "int8":
                     export_path = f"{self.paths['models_dir']}/{self.model_config['name']}_int8.onnx"
-                    model.export(format='onnx', dynamic=True, simplify=True, opset=12)
+                    model.export(format='onnx', dynamic=True, simplify=True, opset=17)
                     default_export = self.base_model_path.replace('.pt', '.onnx')
                     
                     if os.path.exists(default_export):
