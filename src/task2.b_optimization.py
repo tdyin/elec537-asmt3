@@ -37,28 +37,16 @@ class ModelOptimizer:
                     exported_models[format_type] = export_path
                     print(f"Exported {format_type.upper()}: {get_model_size(export_path):.2f} MB")
                 
-                elif format_type == "fp16":
-                    export_path = f"{self.paths['models_dir']}/{self.model_config['name']}_fp16.onnx"
-                    # Export FP32 first
-                    model.export(format='onnx', half=False, simplify=True, opset=12)
-                    default_export = self.base_model_path.replace('.pt', '.onnx')
-                    
-                    if os.path.exists(default_export):
-                        try:
-                            import onnx
-                            from onnxmltools.utils.float16_converter import convert_float_to_float16
-                            
-                            onnx_model = onnx.load(default_export)
-                            onnx_model_fp16 = convert_float_to_float16(onnx_model)
-                            onnx.save(onnx_model_fp16, export_path)
-                            os.remove(default_export)
-                            exported_models[format_type] = export_path
-                            print(f"Exported {format_type.upper()}: {get_model_size(export_path):.2f} MB")
-                        except ImportError:
-                            print("Installing onnxmltools...")
-                            import subprocess
-                            subprocess.run(["pip", "install", "onnxmltools"])
-
+                elif format_type == "dynamic":
+                    export_path = f"{self.paths['models_dir']}/{self.model_config['name']}_dynamic.pt"
+                    import torch
+                    # Apply dynamic quantization
+                    quantized_model = torch.quantization.quantize_dynamic(
+                        model.model, {torch.nn.Linear}, dtype=torch.qint8
+                    )
+                    torch.save(quantized_model, export_path)
+                    exported_models[format_type] = export_path
+                    print(f"Exported DYNAMIC: {get_model_size(export_path):.2f} MB")
                 elif format_type == "int8":
                     export_path = f"{self.paths['models_dir']}/{self.model_config['name']}_int8.onnx"
                     model.export(format='onnx', dynamic=True, simplify=True, opset=17)
