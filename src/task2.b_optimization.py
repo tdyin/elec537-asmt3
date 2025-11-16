@@ -37,16 +37,24 @@ class ModelOptimizer:
                     exported_models[format_type] = export_path
                     print(f"Exported {format_type.upper()}: {get_model_size(export_path):.2f} MB")
                 
-                elif format_type == "dynamic":
-                    export_path = f"{self.paths['models_dir']}/{self.model_config['name']}_dynamic.pt"
-                    import torch
-                    # Apply dynamic quantization
-                    quantized_model = torch.quantization.quantize_dynamic(
-                        model.model, {torch.nn.Linear}, dtype=torch.qint8
-                    )
-                    torch.save(quantized_model, export_path)
-                    exported_models[format_type] = export_path
-                    print(f"Exported DYNAMIC: {get_model_size(export_path):.2f} MB")
+                elif format_type == "fp16":
+                    # Use NCNN format which supports FP16 on CPU
+                    export_path = f"{self.paths['models_dir']}/{self.model_config['name']}_fp16_ncnn_model"
+                    try:
+                        model.export(format='ncnn', half=True)
+                        # NCNN creates a directory with .param and .bin files
+                        default_export = self.base_model_path.replace('.pt', '_ncnn_model')
+                        if os.path.exists(default_export):
+                            os.rename(default_export, export_path)
+                            # Calculate size of directory
+                            total_size = sum(os.path.getsize(os.path.join(export_path, f)) 
+                                        for f in os.listdir(export_path)) / (1024 * 1024)
+                            exported_models[format_type] = export_path
+                            print(f"Exported FP16 (NCNN): {total_size:.2f} MB")
+                        else:
+                            print("NCNN export failed, skipping FP16")
+                    except Exception as e:
+                        print(f"FP16 export error: {e}")
                 elif format_type == "int8":
                     export_path = f"{self.paths['models_dir']}/{self.model_config['name']}_int8.onnx"
                     model.export(format='onnx', dynamic=True, simplify=True, opset=17)

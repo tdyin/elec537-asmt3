@@ -27,7 +27,7 @@ task2:
   quantization:
     formats:
       - "fp32"      # Baseline floating point
-      - "dynamic"      # Half precision
+      - "fp16"      # Half precision
       - "int8"      # Integer quantization
   
 # Performance Monitoring
