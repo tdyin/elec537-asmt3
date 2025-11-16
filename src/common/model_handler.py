@@ -20,6 +20,7 @@ class ModelHandler:
         self.model_type = model_type
         self.model = None
         self.ort_session = None
+        self.device = ort.get_available_providers() if ONNX_AVAILABLE else None
         
         self._load_model()
     
@@ -28,11 +29,12 @@ class ModelHandler:
         if self.model_path.endswith('.pt'):
             self.model = YOLO(self.model_path, task='detect')
         elif self.model_path.endswith('.onnx') and ONNX_AVAILABLE:
+            providers = ['CUDAExecutionProvider'] if 'CUDAExecutionProvider' in self.device else ['CPUExecutionProvider']
             sess_options = ort.SessionOptions()
             sess_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
             self.ort_session = ort.InferenceSession(
                 self.model_path, sess_options=sess_options,
-                providers=['CPUExecutionProvider']
+                providers=providers
             )
     
     def predict(self, img, conf_threshold=0.4, verbose=False):
