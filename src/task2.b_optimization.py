@@ -39,7 +39,7 @@ class ModelOptimizer:
                 
                 elif format_type == "fp16":
                     export_path = f"{self.paths['models_dir']}/{self.model_config['name']}_fp16.onnx"
-                    model.export(format='onnx', half=True, simplify=False, opset=12)  # Changed: simplify=False, opset=12
+                    model.export(format='onnx', half=True, simplify=True, opset=12)  # Changed: simplify=False, opset=12
                     default_export = self.base_model_path.replace('.pt', '.onnx')
                     if os.path.exists(default_export):
                         os.rename(default_export, export_path)
