@@ -5,7 +5,7 @@ from common import download_model_if_needed
 
 
 class ModelOptimizer:
-    def __init__(self, config_path="common/config.yaml"):
+    def __init__(self, config_path="src/config.yaml"):
         self.config = load_config(config_path)
         self.model_config = self.config['model']
         self.paths = self.config['paths']
@@ -29,7 +29,13 @@ class ModelOptimizer:
             
             try:
                 if format_type == "fp32":
-                    exported_models[format_type] = self.base_model_path
+                    export_path = f"{self.paths['models_dir']}/{self.model_config['name']}_fp32.onnx"
+                    model.export(format='onnx', half=False, simplify=True, opset=17)
+                    default_export = self.base_model_path.replace('.pt', '.onnx')
+                    if os.path.exists(default_export):
+                        os.rename(default_export, export_path)
+                    exported_models[format_type] = export_path
+                    print(f"Exported {format_type.upper()}: {get_model_size(export_path):.2f} MB")
                 
                 elif format_type == "fp16":
                     export_path = f"{self.paths['models_dir']}/{self.model_config['name']}_fp16.onnx"

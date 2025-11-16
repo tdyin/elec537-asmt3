@@ -35,7 +35,7 @@ class ModelComparison:
         exported_models = {}
         
         for fmt, path_suffix in [
-            ('fp32', '.pt'), ('fp16', '_fp16.onnx'), ('int8', '_int8.onnx')
+            ('fp32', '_fp32.onnx'), ('fp16', '_fp16.onnx'), ('int8', '_int8.onnx')
         ]:
             model_path = models_dir / f"{model_name}{path_suffix}"
             if model_path.exists():
