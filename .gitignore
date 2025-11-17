@@ -41,11 +41,9 @@ ENV/
 models/
 !models/.gitkeep
 
-# Data and results
-data/
-results/
+# Data files
+data/validation/
 !data/.gitkeep
-!results/.gitkeep
 
 # OS
 .DS_Store
