@@ -157,60 +157,60 @@ class ModelPruning:
             return None
     
     def print_comparison(self, original_metrics, pruned_metrics):
-        print("\n" + "="*80)
+        print("\n" + "="*90)
         print("PRUNING COMPARISON RESULTS")
-        print("="*80)
+        print("="*90)
         
-        print(f"\n{'Metric':<30} {'Original':<20} {'Pruned':<20} {'Change':<15}")
-        print("-"*80)
+        print(f"\n{'Metric':<30} {'Original':<20} {'Pruned':<20} {'Change':>15}")
+        print("-"*90)
         
         # Size comparison
         orig_size = original_metrics['model_size_mb']
         prun_size = pruned_metrics['model_size_mb']
         size_change = ((prun_size - orig_size) / orig_size * 100) if orig_size > 0 else 0
-        print(f"{'Model Size (MB)':<30} {orig_size:<20.2f} {prun_size:<20.2f} {size_change:>+13.2f}%")
+        print(f"{'Model Size (MB)':<30} {orig_size:<20.2f} {prun_size:<20.2f} {size_change:>+14.2f}%")
         
         # Inference time
         orig_time = original_metrics['avg_inference_time_ms']
         prun_time = pruned_metrics['avg_inference_time_ms']
         time_change = ((prun_time - orig_time) / orig_time * 100) if orig_time > 0 else 0
-        print(f"{'Avg Inference Time (ms)':<30} {orig_time:<20.2f} {prun_time:<20.2f} {time_change:>+13.2f}%")
+        print(f"{'Avg Inference Time (ms)':<30} {orig_time:<20.2f} {prun_time:<20.2f} {time_change:>+14.2f}%")
         
         # FPS
         orig_fps = original_metrics['avg_fps']
         prun_fps = pruned_metrics['avg_fps']
         fps_change = ((prun_fps - orig_fps) / orig_fps * 100) if orig_fps > 0 else 0
-        print(f"{'Avg FPS':<30} {orig_fps:<20.2f} {prun_fps:<20.2f} {fps_change:>+13.2f}%")
+        print(f"{'Avg FPS':<30} {orig_fps:<20.2f} {prun_fps:<20.2f} {fps_change:>+14.2f}%")
         
         # Memory
         orig_mem = original_metrics['peak_memory_mb']
         prun_mem = pruned_metrics['peak_memory_mb']
         mem_change = ((prun_mem - orig_mem) / orig_mem * 100) if orig_mem > 0 else 0
-        print(f"{'Peak Memory (MB)':<30} {orig_mem:<20.2f} {prun_mem:<20.2f} {mem_change:>+13.2f}%")
+        print(f"{'Peak Memory (MB)':<30} {orig_mem:<20.2f} {prun_mem:<20.2f} {mem_change:>+14.2f}%")
         
         # Accuracy metrics
-        print("\n" + "-"*80)
+        print("\n" + "-"*90)
         orig_acc = original_metrics['accuracy']
         prun_acc = pruned_metrics['accuracy']
         acc_change = ((prun_acc - orig_acc) / orig_acc * 100) if orig_acc > 0 else 0
-        print(f"{'Accuracy (%)':<30} {orig_acc:<20.2f} {prun_acc:<20.2f} {acc_change:>+13.2f}%")
+        print(f"{'Accuracy (%)':<30} {orig_acc:<20.2f} {prun_acc:<20.2f} {acc_change:>+14.2f}%")
         
         orig_prec = original_metrics['precision']
         prun_prec = pruned_metrics['precision']
         prec_change = ((prun_prec - orig_prec) / orig_prec * 100) if orig_prec > 0 else 0
-        print(f"{'Precision (%)':<30} {orig_prec:<20.2f} {prun_prec:<20.2f} {prec_change:>+13.2f}%")
+        print(f"{'Precision (%)':<30} {orig_prec:<20.2f} {prun_prec:<20.2f} {prec_change:>+14.2f}%")
         
         orig_rec = original_metrics['recall']
         prun_rec = pruned_metrics['recall']
         rec_change = ((prun_rec - orig_rec) / orig_rec * 100) if orig_rec > 0 else 0
-        print(f"{'Recall (%)':<30} {orig_rec:<20.2f} {prun_rec:<20.2f} {rec_change:>+13.2f}%")
+        print(f"{'Recall (%)':<30} {orig_rec:<20.2f} {prun_rec:<20.2f} {rec_change:>+14.2f}%")
         
         orig_f1 = original_metrics['f1_score']
         prun_f1 = pruned_metrics['f1_score']
         f1_change = ((prun_f1 - orig_f1) / orig_f1 * 100) if orig_f1 > 0 else 0
-        print(f"{'F1 Score (%)':<30} {orig_f1:<20.2f} {prun_f1:<20.2f} {f1_change:>+13.2f}%")
+        print(f"{'F1 Score (%)':<30} {orig_f1:<20.2f} {prun_f1:<20.2f} {f1_change:>+14.2f}%")
         
-        print("="*80 + "\n")
+        print("="*90 + "\n")
     
     def run(self):
         models_dir = Path(self.paths['models_dir'])
