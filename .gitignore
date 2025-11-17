@@ -43,6 +43,7 @@ models/
 
 # Data files
 data/validation/
+runs/
 !data/.gitkeep
 
 # OS
