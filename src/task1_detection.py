@@ -1,13 +1,13 @@
 import time
 import cv2
 import numpy as np
-from common import load_config, get_cpu_usage, get_model_size, calculate_metrics
-from common import download_model_if_needed, ModelHandler
+from utils import load_config, get_cpu_usage, get_model_size, calculate_metrics
+from utils import download_model_if_needed, ModelHandler
 
 
 class ObjectDetector:
     """Object Detection using YOLO model with camera input"""
-    def __init__(self, config_path="common/config.yaml"):
+    def __init__(self, config_path="src/config.yaml"):
         self.config = load_config(config_path)
         self.camera_config = self.config['camera']
         self.model_config = self.config['model']

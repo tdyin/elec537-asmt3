@@ -8,7 +8,7 @@ import torch
 import torch.nn.utils.prune as prune
 from pathlib import Path
 from ultralytics import YOLO
-from common import load_config, get_model_size, calculate_metrics
+from utils import load_config, get_model_size, calculate_metrics
 
 class ModelPruning:
     """Apply magnitude-based pruning to YOLO model and benchmark performance"""

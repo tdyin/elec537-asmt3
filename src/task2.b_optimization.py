@@ -1,7 +1,7 @@
 import os
 from ultralytics import YOLO
-from common import load_config, ensure_dir, get_model_size
-from common import download_model_if_needed
+from utils import load_config, ensure_dir, get_model_size
+from utils import download_model_if_needed
 import onnx
 from onnxconverter_common import float16
 from onnxruntime.quantization import quantize_dynamic, QuantType

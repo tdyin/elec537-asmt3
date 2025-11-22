@@ -5,8 +5,7 @@ import cv2
 import numpy as np
 import psutil
 from pathlib import Path
-from common import load_config, get_model_size, calculate_metrics
-from common import ModelHandler
+from utils import load_config, get_model_size, calculate_metrics, ModelHandler
 
 try:
     import onnxruntime as ort
