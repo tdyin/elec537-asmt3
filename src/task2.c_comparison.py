@@ -5,8 +5,7 @@ import cv2
 import numpy as np
 import psutil
 from pathlib import Path
-from common import load_config, get_model_size, calculate_metrics
-from common import ModelHandler
+from utils import load_config, get_model_size, calculate_metrics, ModelHandler
 
 try:
     import onnxruntime as ort
@@ -17,6 +16,7 @@ except ImportError:
 
 
 class ModelComparison:
+    """Compare performance of different quantized YOLO models"""
     def __init__(self, config_path="src/config.yaml", coco_classes_path="data/coco_classes.json"):
         self.config = load_config(config_path)
         
@@ -29,6 +29,7 @@ class ModelComparison:
         self.results = {}
        
     def get_exported_models(self):
+        """Retrieve paths of exported quantized models"""
         models_dir = Path(self.paths['models_dir'])
         model_name = self.model_config['name']
         
@@ -44,6 +45,7 @@ class ModelComparison:
         return exported_models
    
     def collect_validation_images(self):
+        """Collect validation images from the specified directory"""
         val_dir = Path(self.paths['validation_images'])
         images = []
         if val_dir.exists():
@@ -53,11 +55,13 @@ class ModelComparison:
         return images if images else []
     
     def get_ground_truth(self, img_path):
+        """Get ground truth class label and ID for an image"""
         folder_name = Path(img_path).parent.name.lower()
         class_id = self.coco_classes.get(folder_name)
         return (folder_name, class_id) if class_id is not None else (None, None)
     
     def _extract_detections(self, model_handler, results):
+        """Extract detected class IDs from model results"""
         if model_handler.model:
             num_detections = len(results[0].boxes)
             detected_classes = results[0].boxes.cls.cpu().numpy().astype(int) if num_detections > 0 else []
@@ -66,6 +70,7 @@ class ModelComparison:
         return detected_classes
     
     def benchmark_model(self, model_path, format_type, validation_images):
+        """Benchmark a single model on validation images"""
         print(f"Benchmarking {format_type}...", end=" ")
         
         try:
@@ -151,6 +156,7 @@ class ModelComparison:
             return None
  
     def run_benchmarks(self):
+        """Run benchmarks on all exported models"""
         exported_models = self.get_exported_models()
         if not exported_models:
             print("Error: No exported models found. Run task2.b_optimization.py first.")
@@ -166,6 +172,7 @@ class ModelComparison:
         return True
     
     def display_detailed_metrics(self):
+        """Display detailed metrics for each model"""
         if not self.results:
             return
         

@@ -1,12 +1,13 @@
 import os
 from ultralytics import YOLO
-from common import load_config, ensure_dir, get_model_size
-from common import download_model_if_needed
+from utils import load_config, ensure_dir, get_model_size
+from utils import download_model_if_needed
 import onnx
 from onnxconverter_common import float16
 from onnxruntime.quantization import quantize_dynamic, QuantType
 
 class ModelOptimizer:
+    """Optimize YOLO model by exporting quantized versions"""
     def __init__(self, config_path="src/config.yaml"):
         self.config = load_config(config_path)
         self.model_config = self.config['model']
@@ -22,6 +23,8 @@ class ModelOptimizer:
         )
     
     def export_quantized_models(self):
+        """Export quantized versions of the YOLO model"""
+        
         print("\nExporting quantized models...")
         model = YOLO(self.base_model_path)
         exported_models = {}

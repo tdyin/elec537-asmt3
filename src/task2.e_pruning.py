@@ -8,9 +8,10 @@ import torch
 import torch.nn.utils.prune as prune
 from pathlib import Path
 from ultralytics import YOLO
-from common import load_config, get_model_size, calculate_metrics
+from utils import load_config, get_model_size, calculate_metrics
 
 class ModelPruning:
+    """Apply magnitude-based pruning to YOLO model and benchmark performance"""
     def __init__(self, config_path="src/config.yaml", coco_classes_path="data/coco_classes.json"):
         self.config = load_config(config_path)
         
@@ -28,7 +29,7 @@ class ModelPruning:
         try:
             model = YOLO(model_path)
             
-            # Apply global unstructured pruning (more stable than structured)
+            # Apply global unstructured pruning
             parameters_to_prune = []
             for name, module in model.model.named_modules():
                 if isinstance(module, torch.nn.Conv2d):
