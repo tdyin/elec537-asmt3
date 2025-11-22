@@ -7,6 +7,7 @@ from onnxconverter_common import float16
 from onnxruntime.quantization import quantize_dynamic, QuantType
 
 class ModelOptimizer:
+    """Optimize YOLO model by exporting quantized versions"""
     def __init__(self, config_path="src/config.yaml"):
         self.config = load_config(config_path)
         self.model_config = self.config['model']
@@ -22,6 +23,8 @@ class ModelOptimizer:
         )
     
     def export_quantized_models(self):
+        """Export quantized versions of the YOLO model"""
+        
         print("\nExporting quantized models...")
         model = YOLO(self.base_model_path)
         exported_models = {}

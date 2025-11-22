@@ -1,4 +1,3 @@
-"""Shared utilities for model operations and benchmarking"""
 import os
 import yaml
 import psutil
@@ -42,10 +41,12 @@ def nms(boxes, scores, iou_threshold=0.45):
     if len(boxes) == 0:
         return np.array([], dtype=int)
     
+    # Coordinates of bounding boxes
     x1, y1, x2, y2 = boxes[:, 0], boxes[:, 1], boxes[:, 2], boxes[:, 3]
     areas = (x2 - x1) * (y2 - y1)
     order = scores.argsort()[::-1]
     
+    # Perform Non-Maximum Suppression
     keep = []
     while order.size > 0:
         i = order[0]

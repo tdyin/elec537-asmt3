@@ -1,4 +1,3 @@
-"""Base model handler with ONNX runtime support"""
 import os
 import cv2
 import numpy as np
@@ -51,11 +50,11 @@ class ModelHandler:
     
     def _preprocess_onnx(self, img):
         """Preprocess image for ONNX"""
-        img_resized = cv2.resize(img, (640, 640))
-        img_rgb = cv2.cvtColor(img_resized, cv2.COLOR_BGR2RGB)
-        img_normalized = img_rgb.astype(np.float32) / 255.0
-        img_chw = np.transpose(img_normalized, (2, 0, 1))
-        img_batch = np.expand_dims(img_chw, axis=0)
+        img_resized = cv2.resize(img, (640, 640)) # Assuming model input size is 640x640
+        img_rgb = cv2.cvtColor(img_resized, cv2.COLOR_BGR2RGB) # Convert BGR to RGB
+        img_normalized = img_rgb.astype(np.float32) / 255.0 # Normalize to [0, 1]
+        img_chw = np.transpose(img_normalized, (2, 0, 1)) # HWC to CHW
+        img_batch = np.expand_dims(img_chw, axis=0) # Add batch dimension
         
         # Convert to fp16 if model expects fp16 input
         if self.ort_session and self.ort_session.get_inputs()[0].type == 'tensor(float16)':
@@ -66,21 +65,27 @@ class ModelHandler:
     def _postprocess_onnx(self, outputs, conf_threshold):
         """Extract detections from ONNX output"""
         predictions = outputs[0]
+
+        # Adjust shape if necessary
         if len(predictions.shape) == 3 and predictions.shape[1] < predictions.shape[2]:
             predictions = np.transpose(predictions, (0, 2, 1))
-        
+            
+        # Assuming predictions shape is (1, N, 4 + num_classes)
         predictions = predictions[0]
         boxes = predictions[:, :4]
         class_scores = predictions[:, 4:]
         
+        # Get max class scores and corresponding class IDs
         max_scores = np.max(class_scores, axis=1)
         class_ids = np.argmax(class_scores, axis=1)
         
+        # Filter by confidence threshold
         mask = max_scores > conf_threshold
         filtered_boxes = boxes[mask]
         filtered_scores = max_scores[mask]
         filtered_classes = class_ids[mask]
         
+        # Apply NMS
         if len(filtered_boxes) > 0:
             x_c, y_c, w, h = filtered_boxes[:, 0], filtered_boxes[:, 1], filtered_boxes[:, 2], filtered_boxes[:, 3]
             boxes_corner = np.stack([x_c - w/2, y_c - h/2, x_c + w/2, y_c + h/2], axis=1)

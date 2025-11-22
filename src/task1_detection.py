@@ -6,6 +6,7 @@ from common import download_model_if_needed, ModelHandler
 
 
 class ObjectDetector:
+    """Object Detection using YOLO model with camera input"""
     def __init__(self, config_path="common/config.yaml"):
         self.config = load_config(config_path)
         self.camera_config = self.config['camera']
@@ -23,6 +24,7 @@ class ObjectDetector:
         self.current_cpu_usage = 0.0 
         
     def initialize_camera(self):
+        """Initialize camera for video capture"""
         try:
             self.cap = cv2.VideoCapture(0)
             if not self.cap.isOpened():
@@ -38,6 +40,7 @@ class ObjectDetector:
             return False
     
     def process_frame(self, frame):
+        """Process a single frame for object detection"""
         start_time = time.time()
         imgsz = self.model_config.get('imgsz', 320)
         
@@ -54,6 +57,7 @@ class ObjectDetector:
         return annotated_frame, inference_time, results[0]
     
     def display_metrics(self, frame, inference_time, cpu_usage):
+        """Overlay performance metrics on the frame"""
         avg_inference = np.mean(self.inference_times[-30:]) if self.inference_times else 0
         fps = 1000 / avg_inference if avg_inference > 0 else 0
         
@@ -81,6 +85,7 @@ class ObjectDetector:
         return frame
     
     def run(self):
+        """Main loop to run object detection"""
         if not self.initialize_camera():
             return
         
@@ -126,11 +131,13 @@ class ObjectDetector:
             self.print_summary()
     
     def cleanup(self):
+        """Release resources and close windows"""
         if hasattr(self, 'cap'):
             self.cap.release()
         cv2.destroyAllWindows()
     
     def print_summary(self):
+        """Print performance summary"""
         print("\n" + "="*60)
         print("PERFORMANCE SUMMARY")
         print("="*60)
