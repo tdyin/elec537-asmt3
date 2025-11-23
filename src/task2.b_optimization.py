@@ -40,7 +40,7 @@ class ModelOptimizer:
                 elif format_type == "fp16":
                     export_path = f"{self.paths['models_dir']}/{self.model_config['name']}_fp16.onnx"
                     try:
-                        # Move model to MPS (Mac GPU) for FP16 export
+                        # Trying with mac gpu
                         import torch
                         if torch.backends.mps.is_available():
                             device = 'mps'
